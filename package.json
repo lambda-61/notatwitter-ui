@@ -1,0 +1,26 @@
+{
+  "name": "notatwitter-ui",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "parcel src/index.html -p 8000"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lambda-61/notatwitter-ui.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lambda-61/notatwitter-ui/issues"
+  },
+  "homepage": "https://github.com/lambda-61/notatwitter-ui#readme",
+  "devDependencies": {
+    "elm-hot": "^1.1.4",
+    "node-elm-compiler": "^5.0.4",
+    "parcel-bundler": "^1.12.4"
+  }
+}
