@@ -110,13 +110,13 @@ update msg model =
 
 apiUrl : String
 apiUrl =
-    "http://localhost"
+    "/api"
 
 
 requestSession : Cmd Msg
 requestSession =
     Http.get
-        { url = apiUrl ++ "/session"
+        { url = apiUrl ++ "/auth/session"
         , expect = Http.expectJson GotSession sessionDecoder
         }
 
