@@ -40,7 +40,7 @@ type alias LoginData =
 
 
 type alias Session =
-    { id : String
+    { id : Int
     , username : String
     }
 
@@ -76,6 +76,7 @@ type Msg
     | UpdateUsername String
     | UpdatePassword String
     | SignIn
+    | SignUp
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -114,6 +115,14 @@ update msg model =
                 _ ->
                     ( model, Cmd.none )
 
+        SignUp ->
+            case model of
+                Unauthorized loginData ->
+                    ( Loading, signUp loginData )
+
+                _ ->
+                    ( model, Cmd.none )
+
 
 
 -- API
@@ -136,13 +145,16 @@ signIn : LoginData -> Cmd Msg
 signIn loginData =
     Http.post
         { url = apiUrl ++ "/auth/login"
-        , body =
-            Http.jsonBody
-                (E.object
-                    [ ( "username", E.string loginData.username )
-                    , ( "password", E.string loginData.password )
-                    ]
-                )
+        , body = Http.jsonBody (encodeLoginData loginData)
+        , expect = Http.expectJson GotSession sessionDecoder
+        }
+
+
+signUp : LoginData -> Cmd Msg
+signUp loginData =
+    Http.post
+        { url = apiUrl ++ "/auth/register"
+        , body = Http.jsonBody (encodeLoginData loginData)
         , expect = Http.expectJson GotSession sessionDecoder
         }
 
@@ -150,8 +162,16 @@ signIn loginData =
 sessionDecoder : Decoder Session
 sessionDecoder =
     D.map2 Session
-        (D.field "id" D.string)
+        (D.field "id" D.int)
         (D.field "username" D.string)
+
+
+encodeLoginData : LoginData -> E.Value
+encodeLoginData loginData =
+    E.object
+        [ ( "username", E.string loginData.username )
+        , ( "password", E.string loginData.password )
+        ]
 
 
 
@@ -174,7 +194,7 @@ view model =
             text "Loading..."
 
         Unauthorized loginData ->
-            Html.form []
+            div []
                 [ input
                     [ value loginData.username
                     , onInput UpdateUsername
@@ -186,7 +206,8 @@ view model =
                     , onInput UpdatePassword
                     ]
                     []
-                , button [] [ text "Login" ]
+                , button [ onClick SignIn ] [ text "Sign In" ]
+                , button [ onClick SignUp ] [ text "Sign Up" ]
                 ]
 
         Authorised session userData ->
