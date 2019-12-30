@@ -10,8 +10,8 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GotSession (Ok session) ->
-            ( Authorised session {}
-            , Cmd.none
+            ( Authorised session { posts = Model.PostsLoading }
+            , Api.requestPosts session.id GotPosts
             )
 
         GotSession (Err (Http.BadStatus 401)) ->
@@ -21,6 +21,16 @@ update msg model =
 
         GotSession (Err _) ->
             ( ApiUnavailable
+            , Cmd.none
+            )
+
+        GotPosts (Err err) ->
+            ( Model.mapUserData (\ud -> { ud | posts = Model.PostsError err }) model
+            , Cmd.none
+            )
+
+        GotPosts (Ok posts) ->
+            ( Model.mapUserData (\ud -> { ud | posts = Model.PostsReady posts }) model
             , Cmd.none
             )
 

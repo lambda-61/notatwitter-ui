@@ -1,10 +1,16 @@
-module Api exposing (requestSession, signIn, signUp)
+module Api exposing
+    ( requestPosts
+    , requestSession
+    , signIn
+    , signUp
+    )
 
 import Http
 import Json.Decode as D exposing (Decoder)
 import Json.Encode as E
 import Messages exposing (Msg(..))
 import Model exposing (Model)
+import Time
 
 
 apiUrl : String
@@ -38,11 +44,38 @@ signUp loginData =
         }
 
 
+requestPosts : Int -> (Result Http.Error (List Model.Post) -> msg) -> Cmd msg
+requestPosts userId fn =
+    Http.get
+        { url = apiUrl ++ "/users/" ++ String.fromInt userId ++ "/posts"
+        , expect = Http.expectJson fn postsDecoder
+        }
+
+
 sessionDecoder : Decoder Model.Session
 sessionDecoder =
     D.map2 Model.Session
         (D.field "id" D.int)
         (D.field "username" D.string)
+
+
+postDecoder : Decoder Model.Post
+postDecoder =
+    D.map4 Model.Post
+        (D.field "id" D.int)
+        (D.field "userid" D.int)
+        (D.field "createdAt" timeDecoder)
+        (D.field "text" D.string)
+
+
+postsDecoder : Decoder (List Model.Post)
+postsDecoder =
+    D.list postDecoder
+
+
+timeDecoder : Decoder Time.Posix
+timeDecoder =
+    D.map Time.millisToPosix D.int
 
 
 encodeLoginData : Model.LoginData -> E.Value
