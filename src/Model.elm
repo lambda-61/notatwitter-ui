@@ -5,6 +5,7 @@ module Model exposing
     , Posts(..)
     , Session
     , UserData
+    , addPost
     , mapLoginData
     , mapUserData
     )
@@ -48,6 +49,7 @@ type Posts
 
 type alias UserData =
     { posts : Posts
+    , draft : String
     }
 
 
@@ -69,3 +71,13 @@ mapUserData f model =
 
         _ ->
             model
+
+
+addPost : Post -> Posts -> Posts
+addPost post posts =
+    case posts of
+        PostsReady list ->
+            PostsReady (post :: list)
+
+        _ ->
+            posts

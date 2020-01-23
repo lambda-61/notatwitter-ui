@@ -3,6 +3,7 @@ module Api exposing
     , requestSession
     , signIn
     , signUp
+    , createPost
     )
 
 import Http
@@ -16,6 +17,10 @@ import Time
 apiUrl : String
 apiUrl =
     "/api"
+
+
+
+-- APIs
 
 
 requestSession : Cmd Msg
@@ -52,6 +57,19 @@ requestPosts userId fn =
         }
 
 
+createPost : Int -> String -> Cmd Msg
+createPost userId text =
+    Http.post
+        { url = apiUrl ++ "/users/" ++ String.fromInt userId ++ "/posts"
+        , body = Http.jsonBody (E.object [ ( "text", E.string text ) ])
+        , expect = Http.expectJson GotPost postDecoder
+        }
+
+
+
+-- Decoders
+
+
 sessionDecoder : Decoder Model.Session
 sessionDecoder =
     D.map2 Model.Session
@@ -76,6 +94,10 @@ postsDecoder =
 timeDecoder : Decoder Time.Posix
 timeDecoder =
     D.map Time.millisToPosix D.int
+
+
+
+-- Encoders
 
 
 encodeLoginData : Model.LoginData -> E.Value

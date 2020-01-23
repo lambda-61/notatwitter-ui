@@ -10,7 +10,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GotSession (Ok session) ->
-            ( Authorised session { posts = Model.PostsLoading }
+            ( Authorised session { posts = Model.PostsLoading, draft = "" }
             , Api.requestPosts session.id GotPosts
             )
 
@@ -31,6 +31,14 @@ update msg model =
 
         GotPosts (Ok posts) ->
             ( Model.mapUserData (\ud -> { ud | posts = Model.PostsReady posts }) model
+            , Cmd.none
+            )
+
+        GotPost (Err _) ->
+            ( model, Cmd.none )
+
+        GotPost (Ok post) ->
+            ( Model.mapUserData (\ud -> { ud | posts = Model.addPost post ud.posts }) model
             , Cmd.none
             )
 
@@ -56,6 +64,19 @@ update msg model =
             case model of
                 Unauthorized loginData ->
                     ( Loading, Api.signUp loginData )
+
+                _ ->
+                    ( model, Cmd.none )
+
+        UpdateDraft newDraft ->
+            ( Model.mapUserData (\ud -> { ud | draft = newDraft }) model
+            , Cmd.none
+            )
+
+        CreatePost ->
+            case model of
+                Authorised session userData ->
+                    ( model, Api.createPost session.id userData.draft )
 
                 _ ->
                     ( model, Cmd.none )

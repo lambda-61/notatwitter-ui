@@ -32,7 +32,11 @@ view model =
 
         Authorised session userData ->
             div []
-                [ h1 [] [ text ("Hello " ++ session.username ++ "!") ] ]
+                [ h1 [] [ text ("Hello " ++ session.username ++ "!") ]
+                , Html.form [ onSubmit CreatePost ]
+                       [ input [ type_ "text", onInput UpdateDraft ][]
+                       ]
+                ]
 
         ApiUnavailable ->
             text "Something went wrong, please try again later"
