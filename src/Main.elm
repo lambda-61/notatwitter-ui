@@ -1,7 +1,9 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, div, text)
+import Html exposing (Html, div, text, label, form, input)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onInput)
 import Http
 import Json.Decode as Decode exposing (Decoder)
 
@@ -15,6 +17,8 @@ main =
         , view = view
         }
 
+
+-- Model --
 
 type Model
     = Loading
@@ -35,8 +39,22 @@ type alias Session =
     }
 
 
+mapLoginData : (LoginData -> LoginData) -> Model -> Model
+mapLoginData f model =
+    case model of
+        Unauthorised loginData ->
+            Unauthorised (f loginData)
+
+        _ ->
+            model
+
+
+-- Messages --
+
 type Msg
     = GotSession (Result Http.Error Session)
+    | UpdateUsername String
+    | UpdatePassword String
 
 
 init : () -> ( Model, Cmd Msg )
@@ -45,7 +63,7 @@ init _ =
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg _ =
+update msg model =
     case msg of
         GotSession (Ok session) ->
             ( Authorised session, Cmd.none )
@@ -56,6 +74,17 @@ update msg _ =
         GotSession (Err _) ->
             ( ApiUnavailable , Cmd.none )
 
+        UpdateUsername username ->
+            ( mapLoginData (\loginData -> { loginData | username = username }) model
+            , Cmd.none
+            )
+
+        UpdatePassword password ->
+            ( mapLoginData (\loginData -> { loginData | password = password }) model
+            , Cmd.none
+            )
+
+
 
 view : Model -> Html Msg
 view model =
@@ -64,7 +93,18 @@ view model =
             div [] [ text "Loading" ]
 
         Unauthorised _ ->
-            div [] [ text "Unauthorised" ]
+            let
+                loginId =
+                    "login"
+                passwordId =
+                    "password"
+            in
+            Html.form []
+                 [ label [ for loginId ] [ text "Username" ]
+                 , input [ type_ "text", id loginId, onInput UpdateUsername] []
+                 , label [ for passwordId ] [ text "Password" ]
+                 , input [ type_ "password", id passwordId, onInput UpdatePassword ] []
+                 ]
 
         Authorised _ ->
             div [] [ text "Authorised" ]
