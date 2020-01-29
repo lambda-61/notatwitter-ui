@@ -1,11 +1,12 @@
 module Main exposing (main)
 
 import Browser
-import Html exposing (Html, div, form, input, label, text)
+import Html exposing (Html, button, div, form, input, label, text)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onInput)
+import Html.Events exposing (onClick, onInput)
 import Http
 import Json.Decode as Decode exposing (Decoder)
+import Json.Encode as Encode
 
 
 main : Program () Model Msg
@@ -59,6 +60,8 @@ type Msg
     = GotSession (Result Http.Error Session)
     | UpdateUsername String
     | UpdatePassword String
+    | SignIn LoginData
+    | SignUp LoginData
 
 
 init : () -> ( Model, Cmd Msg )
@@ -88,6 +91,12 @@ update msg model =
             , Cmd.none
             )
 
+        SignIn loginData ->
+            ( model, signIn loginData )
+
+        SignUp loginData ->
+            ( model, signUp loginData )
+
 
 view : Model -> Html Msg
 view model =
@@ -95,7 +104,7 @@ view model =
         Loading ->
             div [] [ text "Loading" ]
 
-        Unauthorised _ ->
+        Unauthorised loginData ->
             let
                 loginId =
                     "login"
@@ -103,11 +112,13 @@ view model =
                 passwordId =
                     "password"
             in
-            Html.form []
+            div []
                 [ label [ for loginId ] [ text "Username" ]
-                , input [ type_ "text", id loginId, onInput UpdateUsername ] []
+                , input [ type_ "text", id loginId, value loginData.username, onInput UpdateUsername ] []
                 , label [ for passwordId ] [ text "Password" ]
-                , input [ type_ "password", id passwordId, onInput UpdatePassword ] []
+                , input [ type_ "password", id passwordId, value loginData.password, onInput UpdatePassword ] []
+                , button [ onClick (SignIn loginData) ] [ text "Sign In" ]
+                , button [ onClick (SignUp loginData) ] [ text "Sign Up" ]
                 ]
 
         Authorised _ ->
@@ -139,8 +150,42 @@ requestSession =
         }
 
 
+signIn : LoginData -> Cmd Msg
+signIn loginData =
+    Http.post
+        { url = apiUrl ++ "/auth/login"
+        , body = Http.jsonBody (encodeLoginData loginData)
+        , expect = Http.expectJson GotSession sessionDecoder
+        }
+
+
+signUp : LoginData -> Cmd Msg
+signUp loginData =
+    Http.post
+        { url = apiUrl ++ "/auth/register"
+        , body = Http.jsonBody (encodeLoginData loginData)
+        , expect = Http.expectJson GotSession sessionDecoder
+        }
+
+
+
+-- Decoders --
+
+
 sessionDecoder : Decoder Session
 sessionDecoder =
     Decode.map2 Session
         (Decode.field "id" Decode.int)
         (Decode.field "username" Decode.string)
+
+
+
+-- Encoders --
+
+
+encodeLoginData : LoginData -> Encode.Value
+encodeLoginData loginData =
+    Encode.object
+        [ ( "username", Encode.string loginData.username )
+        , ( "password", Encode.string loginData.password )
+        ]
